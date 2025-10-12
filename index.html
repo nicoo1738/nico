@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Merry Christmas 🎄</title>
+  <style>
+    :root{
+      --bg1: #071029;
+      --accent: #ffdd57;
+      --card: rgba(255,255,255,0.06);
+      --red: #ff4d6d;
+    }
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;background:linear-gradient(180deg,#071029 0%, #071b2a 60%, #0b1520 100%);color:#fff;overflow:hidden}
+    .container{position:relative;z-index:20;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:30px}
+    .card{width:90%;max-width:720px;background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));border-radius:18px;padding:36px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.6);backdrop-filter: blur(6px);position:relative}
+    h1{font-size:36px;margin:0 0 8px;letter-spacing:0.6px}
+    p.lead{font-size:20px;margin:6px 0 18px;opacity:0.95}
+    .reveal{margin-top:18px}
+    .btn{display:inline-block;padding:12px 18px;border-radius:999px;background:linear-gradient(90deg,#ff6b7a,#ffb199);color:#111;font-weight:700;text-decoration:none;cursor:pointer;border:none;box-shadow:0 6px 20px rgba(255,107,122,0.14);transition:transform 120ms ease}
+    .btn:active{transform:translateY(2px)}
+    .twist{margin-top:18px;font-size:22px;opacity:0;transform:translateY(6px);transition:all 450ms cubic-bezier(.2,.8,.2,1);color:var(--red);font-weight:800}
+    .twist.show{opacity:1;transform:translateY(0);text-shadow:0 6px 30px rgba(255,80,110,0.18)}
+    /* music toggle */
+    .music-toggle{position:fixed;right:18px;top:18px;background:rgba(255,255,255,0.06);border-radius:12px;padding:10px;border:1px solid rgba(255,255,255,0.04);cursor:pointer;z-index:50}
+    /* snow canvas and twinkle lights */
+    #snowCanvas{position:fixed;inset:0;z-index:5;pointer-events:none}
+    .lights{position:fixed;inset:0;z-index:6;pointer-events:none;background-image:radial-gradient(circle at 20% 10%, rgba(255,230,180,0.06) 0px, transparent 60px), radial-gradient(circle at 85% 15%, rgba(180,220,255,0.04) 0px, transparent 80px);mix-blend-mode:screen;opacity:0.9}
+    /* twinkle small dots */
+    .twinkle-dot{position:absolute;width:6px;height:6px;background:radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.6) 40%, transparent 70%);border-radius:50%;opacity:0.0;animation:twinkle 2.6s infinite ease-in-out}
+    @keyframes twinkle{0%{opacity:0}50%{opacity:1}100%{opacity:0}}
+    /* responsive */
+    @media (max-width:520px){h1{font-size:28px}.card{padding:22px} .twist{font-size:18px}}
+  </style>
+</head>
+<body>
+  <!-- background video (subtle bokeh or lights) -->
+  <div id="videoWrap" style="position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden">
+    <video autoplay muted loop playsinline style="width:120%;height:120%;object-fit:cover;opacity:0.14;filter:blur(2px) contrast(1.1) saturate(0.9)">
+      <source src="bg.mp4" type="video/mp4">
+    </video>
+  </div>
+
+  <!-- snow canvas and twinkle lights -->
+  <canvas id="snowCanvas"></canvas>
+  <div class="lights" id="lightsLayer"></div>
+
+  <!-- music toggle -->
+  <button id="musicToggle" class="music-toggle" aria-pressed="false">🔈</button>
+
+  <div class="container">
+    <div class="card" role="main" aria-live="polite">
+      <h1>Merry Christmas! 🎅💞</h1>
+      <p class="lead">Wishing you a season full of joy and warm moments.</p>
+
+      <div class="reveal">
+        <button id="openGift" class="btn">Open your gift 🎁</button>
+        <div id="twist" class="twist">I kinda like you 😝🥰</div>
+      </div>
+
+      <p style="margin-top:22px;font-size:13px;opacity:0.8">Playful surprise — made with ❤️</p>
+    </div>
+  </div>
+
+  <audio id="bgAudio" loop src="music.mp3"></audio>
+
+  <script>
+    // AUTOPLAY WITH FADE-IN (tries autoplay; if blocked, user can click toggle)
+    const audio = document.getElementById('bgAudio');
+    const toggle = document.getElementById('musicToggle');
+    let fadeInterval;
+    let isPlaying = false;
+
+    function fadeIn(aud, step=0.02, ms=100){
+      clearInterval(fadeInterval);
+      aud.volume = aud.volume || 0;
+      fadeInterval = setInterval(()=>{
+        if(aud.volume < 1) aud.volume = Math.min(aud.volume + step, 1);
+        else clearInterval(fadeInterval);
+      }, ms);
+    }
+    function fadeOutAndPause(aud, step=0.02, ms=100){
+      clearInterval(fadeInterval);
+      fadeInterval = setInterval(()=>{
+        if(aud.volume > 0.02) aud.volume = Math.max(aud.volume - step, 0);
+        else { clearInterval(fadeInterval); aud.pause(); }
+      }, ms);
+    }
+
+    // Try autoplay on load
+    window.addEventListener('load', ()=>{
+      audio.volume = 0;
+      audio.play().then(()=>{
+        fadeIn(audio, 0.01, 120);
+        isPlaying = true;
+        toggle.textContent = '🔊';
+        toggle.setAttribute('aria-pressed','true');
+      }).catch(()=>{
+        console.log('Autoplay blocked - click the music button to start.');
+      });
+    });
+
+    // Toggle button
+    toggle.addEventListener('click', ()=>{
+      if(!isPlaying){
+        audio.play().then(()=> fadeIn(audio, 0.02, 100)).catch(()=>{});
+        toggle.textContent = '🔊'; toggle.setAttribute('aria-pressed','true'); isPlaying = true;
+      } else {
+        fadeOutAndPause(audio, 0.02, 100);
+        toggle.textContent = '🔈'; toggle.setAttribute('aria-pressed','false'); isPlaying = false;
+      }
+    });
+
+    // Reveal twist on click
+    const openBtn = document.getElementById('openGift');
+    const twist = document.getElementById('twist');
+    openBtn.addEventListener('click', ()=>{
+      twist.classList.add('show');
+      spawnHearts(26);
+    });
+
+    // Simple snow canvas
+    (function(){
+      const canvas = document.getElementById('snowCanvas');
+      const ctx = canvas.getContext('2d');
+      let W, H, flakes = [];
+      function resize(){W=canvas.width=innerWidth; H=canvas.height=innerHeight}
+      window.addEventListener('resize', resize); resize();
+
+      function rand(min,max){return Math.random()*(max-min)+min}
+      function makeFlakes(n=120){ flakes=[]; for(let i=0;i<n;i++){ flakes.push({x:rand(0,W), y:rand(-H, H), r:rand(0.6,3.6), vx:rand(-0.3,0.3), vy:rand(0.3,1.2)}) } }
+      makeFlakes(120);
+
+      function draw(){
+        ctx.clearRect(0,0,W,H);
+        ctx.fillStyle='rgba(255,255,255,0.9)';
+        flakes.forEach(f=>{
+          f.x += f.vx; f.y += f.vy;
+          if(f.y>H){ f.y = -10; f.x = rand(0,W) }
+          ctx.beginPath();
+          ctx.globalAlpha = 0.9;
+          ctx.arc(f.x, f.y, f.r, 0, Math.PI*2);
+          ctx.fill();
+        });
+        requestAnimationFrame(draw);
+      }
+      draw();
+    })();
+
+    // Twinkling lights: randomly place small dots that animate
+    (function(){
+      const lightsLayer = document.getElementById('lightsLayer');
+      const count = 22;
+      for(let i=0;i<count;i++){
+        const d = document.createElement('div');
+        d.className = 'twinkle-dot';
+        const left = Math.random()*100;
+        const top = Math.random()*100;
+        d.style.left = left+'%';
+        d.style.top = top+'%';
+        d.style.width = (4+Math.random()*8)+'px';
+        d.style.height = d.style.width;
+        d.style.animationDelay = (Math.random()*2)+'s';
+        d.style.opacity = 0;
+        lightsLayer.appendChild(d);
+      }
+    })();
+
+    // spawn hearts/confetti for the reveal
+    function spawnHearts(n=20){
+      const container = document.body;
+      for(let i=0;i<n;i++){
+        const el = document.createElement('div');
+        el.textContent = '💖';
+        el.style.position = 'fixed';
+        el.style.left = (30 + Math.random()*40) + '%';
+        el.style.top = (40 + Math.random()*30) + '%';
+        el.style.fontSize = (18+Math.random()*28) + 'px';
+        el.style.opacity = 1;
+        el.style.transform = 'translateY(0)';
+        el.style.zIndex = 60;
+        container.appendChild(el);
+        const dx = -60 + Math.random()*120;
+        const dy = -160 - Math.random()*120;
+        el.animate([
+          { transform: 'translateY(0) translateX(0)', opacity:1 },
+          { transform: `translateY(${dy}px) translateX(${dx}px)`, opacity:0 }
+        ], { duration: 1200 + Math.random()*600, easing: 'cubic-bezier(.2,.8,.2,1)' });
+        setTimeout(()=> el.remove(), 1800 + Math.random()*800);
+      }
+    }
+  </script>
+</body>
+</html>
